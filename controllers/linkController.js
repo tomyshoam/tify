@@ -3,6 +3,7 @@ const Link = require('../models/linkModel');
 //Functions
 exports.getAllLinks = async (req, res) => {
   console.log(req.query);
+  console.log('hello');
   try {
     const allLinks = await Link.find();
     res.status(200).json({
