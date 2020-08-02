@@ -1,85 +1,98 @@
 const Link = require('../models/linkModel');
-
+const APIFeatures = require('../utils/apiFeatures');
+const AppError = require('../utils/appError');
+const catchAsync = require('../utils/catchAsync');
 //Functions
-exports.getAllLinks = async (req, res) => {
-  console.log(req.query);
-  console.log('hello');
-  try {
-    const allLinks = await Link.find();
-    res.status(200).json({
-      status: 'success',
-      data: allLinks,
-    });
-  } catch (err) {
-    res.status(404).json({
-      status: 'fail',
-      message: err,
-    });
-  }
+
+exports.aliasMostVisited = (req, res, next) => {
+  req.query.limit = 3;
+  req.query.sort = '-visitsQuantity';
+  req.query.fields = '-createdAt';
+  next();
 };
 
-exports.getLink = async (req, res) => {
-  try {
-    const singleLink = await Link.findById(req.params.id);
-    // Link.findOne({ _id: req.params.id })
-    res.status(200).json({
-      status: 'success',
-      data: singleLink,
-    });
-  } catch (err) {
-    res.status(404).json({
-      status: 'fail',
-      message: err,
-    });
-  }
-};
+exports.getAllLinks = catchAsync(async (req, res, next) => {
+  //Execute query
+  const features = new APIFeatures(Link.find(), req.query)
+    .filter()
+    .sort()
+    .limit()
+    .paginate();
+  const links = await features.query;
+  //Send response
+  res.status(200).json({
+    status: 'success',
+    results: links.length,
+    data: links,
+  });
+});
 
-exports.createLink = async (req, res) => {
-  try {
-    const newLink = await Link.create(req.body);
-    res.status(201).json({
-      status: 'success',
-      data: {
-        link: newLink,
+exports.getLink = catchAsync(async (req, res, next) => {
+  const singleLink = await Link.findById(req.params.id);
+  if (!singleLink) {
+    return next(new AppError(`No tour found with ID ${req.params.id}`, 404));
+  }
+  res.status(200).json({
+    status: 'success',
+    data: singleLink,
+  });
+});
+
+exports.createLink = catchAsync(async (req, res, next) => {
+  const newLink = await Link.create(req.body);
+  res.status(201).json({
+    status: 'success',
+    data: {
+      link: newLink,
+    },
+  });
+});
+
+exports.updateLink = catchAsync(async (req, res, next) => {
+  const updatedLink = await Link.findByIdAndUpdate(req.params.id, req.body, {
+    new: true,
+    runValidators: true,
+  });
+  if (!updatedLink) {
+    return next(new AppError(`No tour found with ID ${req.params.id}`, 404));
+  }
+  res.status(200).json({
+    status: 'success',
+    data: updatedLink,
+  });
+});
+
+exports.deleteLink = catchAsync(async (req, res, next) => {
+  const deletedLink = await Link.findByIdAndDelete(req.params.id);
+  if (!deletedLink) {
+    return next(new AppError(`No tour found with ID ${req.params.id}`, 404));
+  }
+  res.status(204).json({
+    status: 'success',
+    data: null,
+  });
+});
+
+exports.getLinkStats = catchAsync(async (req, res, next) => {
+  const stats = await Link.aggregate([
+    {
+      $match: { visitsQuantity: { $gte: 0 } },
+    },
+    {
+      $group: {
+        _id: null,
+        numLinks: { $sum: 1 },
+        avgVists: { $avg: '$visitsQuantity' },
+        minVisits: { $min: '$visitsQuantity' },
+        maxVisits: { $max: '$visitsQuantity' },
       },
-    });
-  } catch (err) {
-    res.status(400).json({
-      status: 'fail',
-      message: 'Invalid data sent',
-    });
-  }
-};
-
-exports.updateLink = async (req, res) => {
-  try {
-    const updatedLink = await Link.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      runValidators: true,
-    });
-    res.status(200).json({
-      status: 'success',
-      data: updatedLink,
-    });
-  } catch (err) {
-    res.status(400).json({
-      status: 'fail',
-      message: err,
-    });
-  }
-};
-
-exports.deleteLink = async (req, res) => {
-  try {
-    await Link.findByIdAndDelete(req.params.id);
-    res.status(204).json({
-      status: 'success',
-      data: null,
-    });
-  } catch (err) {
-    res.status(404).json({
-      status: 'fail',
-      message: err,
-    });
-  }
-};
+    },
+    {
+      $sort: { avgVisits: 1 },
+    },
+  ]);
+  res.status(200).json({
+    status: 'success',
+    data: stats,
+  });
+});
