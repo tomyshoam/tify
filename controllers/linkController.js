@@ -30,7 +30,7 @@ exports.getAllLinks = catchAsync(async (req, res, next) => {
 exports.getLink = catchAsync(async (req, res, next) => {
   const singleLink = await Link.findById(req.params.id);
   if (!singleLink) {
-    return next(new AppError(`No tour found with ID ${req.params.id}`, 404));
+    return next(new AppError(`No link found with ID ${req.params.id}`, 404));
   }
   res.status(200).json({
     status: 'success',
@@ -54,7 +54,7 @@ exports.updateLink = catchAsync(async (req, res, next) => {
     runValidators: true,
   });
   if (!updatedLink) {
-    return next(new AppError(`No tour found with ID ${req.params.id}`, 404));
+    return next(new AppError(`No link found with ID ${req.params.id}`, 404));
   }
   res.status(200).json({
     status: 'success',
@@ -65,7 +65,7 @@ exports.updateLink = catchAsync(async (req, res, next) => {
 exports.deleteLink = catchAsync(async (req, res, next) => {
   const deletedLink = await Link.findByIdAndDelete(req.params.id);
   if (!deletedLink) {
-    return next(new AppError(`No tour found with ID ${req.params.id}`, 404));
+    return next(new AppError(`No link found with ID ${req.params.id}`, 404));
   }
   res.status(204).json({
     status: 'success',
