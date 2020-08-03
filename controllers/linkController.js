@@ -28,7 +28,7 @@ exports.getAllLinks = catchAsync(async (req, res, next) => {
 });
 
 exports.getLink = catchAsync(async (req, res, next) => {
-  const singleLink = await Link.findById(req.params.id);
+  const singleLink = await Link.findById(req.params.id).populate('visits');
   if (!singleLink) {
     return next(new AppError(`No link found with ID ${req.params.id}`, 404));
   }
