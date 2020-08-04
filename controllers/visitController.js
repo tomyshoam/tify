@@ -1,23 +1,19 @@
 const Visit = require('../models/visitModel');
-const AppError = require('../utils/appError');
-const catchAsync = require('../utils/catchAsync');
 
-exports.getAllVisits = catchAsync(async (req, res, next) => {
-  const visits = await Visit.find();
-  //Send response
-  res.status(200).json({
-    status: 'success',
-    results: visits.length,
-    data: visits,
-  });
-});
+const {
+  deleteOne,
+  updateOne,
+  createOne,
+  getOne,
+  getAll,
+} = require('./handlerFactory.js');
 
-exports.createVisit = catchAsync(async (req, res, next) => {
-  const newVisit = await Visit.create(req.body);
-  res.status(201).json({
-    status: 'success',
-    data: {
-      link: newVisit,
-    },
-  });
-});
+exports.getAllVisits = getAll(Visit);
+
+exports.getVisit = getOne(Visit);
+
+exports.createVisit = createOne(Visit);
+
+exports.deleteVisit = deleteOne(Visit);
+
+exports.updateVisit = updateOne(Visit);

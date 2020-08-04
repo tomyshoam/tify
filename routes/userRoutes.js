@@ -3,6 +3,7 @@ const {
   getAllUsers,
   createUser,
   getUser,
+  getMe,
   updateUser,
   deleteUser,
   updateSelf,
@@ -26,9 +27,14 @@ router.post('/login', login);
 router.post('/forgotpassword', forgotPassword);
 router.patch('/resetpassword/:token', resetPassword);
 router.patch('/updatepassword', protect, updatePassword);
+router.get('/me', protect, getMe, getUser);
 router.patch('/updateself', protect, updateSelf);
 router.delete('/deleteSelf', protect, deleteSelf);
-router.route('/').get(protect, getAllUsers).post(createUser);
-router.route('/:id').get(getUser).patch(updateUser).delete(deleteUser);
+router.route('/').get(protect, getAllUsers).post(protect, createUser);
+router
+  .route('/:id')
+  .get(protect, getUser)
+  .patch(protect, updateUser)
+  .delete(protect, deleteUser);
 
 module.exports = router;

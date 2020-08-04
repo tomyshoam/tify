@@ -1,7 +1,12 @@
 const Link = require('../models/linkModel');
-const APIFeatures = require('../utils/apiFeatures');
-const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
+const {
+  deleteOne,
+  updateOne,
+  createOne,
+  getOne,
+  getAll,
+} = require('./handlerFactory');
 //Functions
 
 exports.aliasMostVisited = (req, res, next) => {
@@ -10,68 +15,6 @@ exports.aliasMostVisited = (req, res, next) => {
   req.query.fields = '-createdAt';
   next();
 };
-
-exports.getAllLinks = catchAsync(async (req, res, next) => {
-  //Execute query
-  const features = new APIFeatures(Link.find(), req.query)
-    .filter()
-    .sort()
-    .limit()
-    .paginate();
-  const links = await features.query;
-  //Send response
-  res.status(200).json({
-    status: 'success',
-    results: links.length,
-    data: links,
-  });
-});
-
-exports.getLink = catchAsync(async (req, res, next) => {
-  const singleLink = await Link.findById(req.params.id).populate('visits');
-  if (!singleLink) {
-    return next(new AppError(`No link found with ID ${req.params.id}`, 404));
-  }
-  res.status(200).json({
-    status: 'success',
-    data: singleLink,
-  });
-});
-
-exports.createLink = catchAsync(async (req, res, next) => {
-  const newLink = await Link.create(req.body);
-  res.status(201).json({
-    status: 'success',
-    data: {
-      link: newLink,
-    },
-  });
-});
-
-exports.updateLink = catchAsync(async (req, res, next) => {
-  const updatedLink = await Link.findByIdAndUpdate(req.params.id, req.body, {
-    new: true,
-    runValidators: true,
-  });
-  if (!updatedLink) {
-    return next(new AppError(`No link found with ID ${req.params.id}`, 404));
-  }
-  res.status(200).json({
-    status: 'success',
-    data: updatedLink,
-  });
-});
-
-exports.deleteLink = catchAsync(async (req, res, next) => {
-  const deletedLink = await Link.findByIdAndDelete(req.params.id);
-  if (!deletedLink) {
-    return next(new AppError(`No link found with ID ${req.params.id}`, 404));
-  }
-  res.status(204).json({
-    status: 'success',
-    data: null,
-  });
-});
 
 exports.getLinkStats = catchAsync(async (req, res, next) => {
   const stats = await Link.aggregate([
@@ -96,3 +39,19 @@ exports.getLinkStats = catchAsync(async (req, res, next) => {
     data: stats,
   });
 });
+
+// Adds the currently logged in user as the owner of the created asset
+exports.addOwner = (req, res, next) => {
+  req.body = { ...req.body, user: req.user._id };
+  next();
+};
+
+exports.getAllLinks = getAll(Link);
+
+exports.getLink = getOne(Link, { path: 'visits' });
+
+exports.createLink = createOne(Link);
+
+exports.updateLink = updateOne(Link, true);
+
+exports.deleteLink = deleteOne(Link, true);
