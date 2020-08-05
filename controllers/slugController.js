@@ -12,8 +12,7 @@ exports.redirectToSlug = catchAsync(async (req, res, next) => {
   // 1) Check if slug exists
   const link = await Link.findOne({ slug: req.params.slug });
   if (!link) return next(new AppError('Link was not found', 404));
-  // 2) Increment visits and create new visit document
-  link.visitsQuantity += 1;
+  // 2) create new visit document
   await Visit.create({
     link: link._id,
     ip: requestIp,

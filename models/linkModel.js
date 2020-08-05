@@ -53,6 +53,8 @@ const linkSchema = new mongoose.Schema(
   }
 );
 
+linkSchema.index({ visitsQuantity: 1 });
+
 linkSchema.virtual('visits', {
   ref: 'Visit',
   foreignField: 'link',
